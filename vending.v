@@ -1,82 +1,111 @@
-module vending_machine(nw_pa,clk,coin,rst);
+module vending_machine();
 
-   output reg nw_pa;
-   input [1:0] coin;
-   input       clk,rst;
-   reg [1:0]   state;
-   reg [1:0]   next_state;
+   output reg out;
+   output reg [1:0] change;
+   input [1:0] in;// 01=5 rs ,10=10rs
+   input      clk,rst;
+   
+   
+   reg [1:0]   c_state;
+   reg [1:0]   n_state;
 
 
-   parameter [1:0] s0=2'b00;
-   parameter [1:0] s5=2'b01;
-   parameter [1:0] s10=2'b10;
-   parameter [1:0] s15=2'b11;
+   parameter  s0=2'b00;
+   parameter  s1=2'b01;
+   parameter  s2=2'b10;
+  
 
 
    always @(posedge clk)
      begin
-       if (rst)
-         state=s0;
-       else
-         state=next_state;
-     end
-
-
-   always @(state,coin)
-     begin
-    case (state)
-     s0:
-        begin
-           if (coin==2'b00)
-        next_state=s0;
-           else
-       if (coin==2'b01)
-          next_state=s5;
-       else
-         if (coin==2'b10)
-          next_state=s10;
-        end
-       s5:
-          begin
-       if (coin==2'b00)
-          next_state=s5;
-       else
-         if (coin==2'b01)
-            next_state=s10;
-         else
-           if (coin==2'b10)
-             next_state=s15;
-             end
-       s10:
-          begin
-           if (coin==2'b00)
-        next_state=s10;
-           else
-       if (coin==2'b01)
-          next_state=s15;
-       else
-        if (coin==2'b10)
-            next_state=s15;  
+        if (rst==1) // reset all the variable
+           begin
+              c_state=0;
+              n_state=0;
+              change=2'00;
            end
-       s15:
+        
+       else
+         c_state=n_state;
+     
+
+
+      
+        case (c_state)
+     s0: //state 0: 0 rs
+       
+           if (in==2'b00)
+               begin
+                  n_state=s0;
+                  out=0;
+                  change=2'b00;
+                end  
+           
+           else if (in==2'b01) //01 means 5 rs
+              begin 
+                   n_state=s1;
+                   out=0;
+                   change=2'b00;
+              end
+           
+          
+         else if (in==2'b10)
           begin
-       next_state=s0;
+            n_state=s2;
+            out=0;
+           change=2'b00;
           end
-       default : next_state=s0;
-   
+       s1:  // state 1 :5 rs
+          
+         if (in==2'b00)
+               begin
+                  n_state=s0;
+                  out=0;
+                  change=2'b01;
+                end  
+           
+           else if (in==2'b01)//01 means 5 rs
+              begin 
+                   n_state=s2;
+                   out=0;
+                   change=2'b00;
+              end
+           
+          
+         else if (in==2'b10)
+          begin
+            n_state=s1;
+            out=1;
+           change=2'b00;
+          end
+       s2:
+         if (in==2'b00)
+               begin
+                  n_state=s0;
+                  out=0;
+                  change=2'b10;
+                end  
+           
+           else if (in==2'b01)
+              begin //01 means 5 rs
+                   n_state=s0;
+                   out=1;
+                   change=2'b00;
+              end
+           
+          
+           else if (in==2'b10)  // adding 10 rs means already have 10 rs so return
+                                // 5 rs and out is 1.
+          begin
+            n_state=s0;
+            out=1;
+           change=2'b01;
+          end
+       
     endcase // case (state)
-     end // always @ (state,next_state)
+     
 
 
-   always @(state)
- begin
-   case (state)
-      s0 : nw_pa<=1'b0;
-      s5 : nw_pa<=1'b0;
-      s10: nw_pa<=1'b0;
-      s15: nw_pa<=1'b1;
-    default: nw_pa<=1'b0;
-   endcase // case (state)
- end
+  
  
 endmodule
